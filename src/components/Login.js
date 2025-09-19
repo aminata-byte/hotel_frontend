@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { authAPI } from "../services/api";
 import "./AuthForm.css";
 
 const Login = ({ switchToRegister, onLoginSuccess }) => {
@@ -29,10 +29,7 @@ const Login = ({ switchToRegister, onLoginSuccess }) => {
     setErrors({});
 
     try {
-      const response = await axios.post(
-        "http://127.0.0.1:8000/api/login",
-        formData
-      );
+      const response = await authAPI.login(formData);
 
       if (response.data.token) {
         localStorage.setItem("authToken", response.data.token);

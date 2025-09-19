@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { authAPI, hotelsAPI, statsAPI, API_BASE_URL } from "../services/api";
 import HotelFormModal from "./HotelFormModal";
-
-// URL de l'API alignée avec App.js
-const API_BASE_URL = "http://127.0.0.1:8000/api";
 
 const Dashboard = ({ onLogout }) => {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -23,16 +20,8 @@ const Dashboard = ({ onLogout }) => {
 
   // Fonction pour récupérer les informations de l'utilisateur
   const fetchUser = async () => {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      setError("Vous devez être connecté pour accéder au tableau de bord.");
-      onLogout();
-      return;
-    }
     try {
-      const response = await axios.get(`${API_BASE_URL}/user`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await authAPI.getCurrentUser();
       setUser(response.data);
     } catch (error) {
       console.error("Erreur lors de la récupération de l'utilisateur:", error);
@@ -46,17 +35,9 @@ const Dashboard = ({ onLogout }) => {
 
   // Fonction pour récupérer la liste des hôtels
   const fetchHotels = async () => {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      setError("Vous devez être connecté pour voir vos hôtels.");
-      onLogout();
-      return;
-    }
     try {
       setIsLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/my-hotels`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await hotelsAPI.getMyHotels();
       setHotels(response.data);
       setStats((prev) => ({ ...prev, hotels: response.data.length }));
       setError(null);
@@ -73,27 +54,19 @@ const Dashboard = ({ onLogout }) => {
 
   // Fonction pour récupérer les autres statistiques (exemple générique)
   const fetchStats = async () => {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      setError("Vous devez être connecté pour voir les statistiques.");
-      return;
-    }
     try {
       // Exemple : Appels API pour récupérer formulaires, messages, utilisateurs, emails, entités
       // Remplace ces URLs par les endpoints réels de ton API
       const endpoints = [
-        { key: "formulaires", url: `${API_BASE_URL}/forms` },
-        { key: "messages", url: `${API_BASE_URL}/messages` },
-        { key: "utilisateurs", url: `${API_BASE_URL}/users` },
-        { key: "emails", url: `${API_BASE_URL}/emails` },
-        { key: "entites", url: `${API_BASE_URL}/entities` },
+        { key: "formulaires", apiCall: statsAPI.getForms },
+        { key: "messages", apiCall: statsAPI.getMessages },
+        { key: "utilisateurs", apiCall: statsAPI.getUsers },
+        { key: "emails", apiCall: statsAPI.getEmails },
+        { key: "entites", apiCall: statsAPI.getEntities },
       ];
 
-      const promises = endpoints.map(({ key, url }) =>
-        axios
-          .get(url, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
+      const promises = endpoints.map(({ key, apiCall }) =>
+        apiCall()
           .then((response) => ({ key, count: response.data.length || 0 }))
           .catch((error) => {
             console.error(`Erreur lors de la récupération de ${key}:`, error);
@@ -116,18 +89,8 @@ const Dashboard = ({ onLogout }) => {
 
   // Fonction pour créer un hôtel
   const handleCreateHotel = async (hotelData, setModalError) => {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      setModalError("Vous devez être connecté pour créer un hôtel.");
-      return;
-    }
     try {
-      const response = await axios.post(`${API_BASE_URL}/hotels`, hotelData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const response = await hotelsAPI.createHotel(hotelData);
       console.log("Nouvel hôtel créé :", response.data);
       await fetchHotels(); // Recharger les hôtels
       setIsModalOpen(false);
@@ -245,7 +208,7 @@ const Dashboard = ({ onLogout }) => {
                     {hotel.photo && (
                       <div className="hotel-photo-container">
                         <img
-                          src={`http://127.0.0.1:8000/storage/${
+                          src={`${API_BASE_URL}/storage/${
                             hotel.photo
                           }?t=${new Date().getTime()}`}
                           alt={`Photo de ${hotel.name}`}

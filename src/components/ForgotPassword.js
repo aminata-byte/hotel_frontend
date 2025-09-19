@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { authAPI } from "../services/api";
 import { Link, useNavigate } from "react-router-dom";
 
 const ForgotPassword = () => {
@@ -18,10 +18,7 @@ const ForgotPassword = () => {
     setShowResetForm(false);
 
     try {
-      const res = await axios.post(
-        "http://127.0.0.1:8000/api/forgot-password",
-        { email }
-      );
+      const res = await authAPI.forgotPassword(email);
 
       // Si succès → affiche message et attendre 3s avant de montrer reset form
       setMessage(res.data.message || "Email trouvé, préparez le reset...");
@@ -44,7 +41,7 @@ const ForgotPassword = () => {
     }
 
     try {
-      await axios.post("http://127.0.0.1:8000/api/reset-password", {
+      await authAPI.resetPassword({
         email,
         password: newPassword,
       });
