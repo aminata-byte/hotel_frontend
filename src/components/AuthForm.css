@@ -1,118 +1,138 @@
+/* Container global */
 .auth-container {
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #f5f5f5;
-    padding: 20px;
+    background: #2d2d2d;
+    /* fond gris foncé */
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    padding: 1rem;
 }
 
+/* Box du formulaire */
 .auth-form {
-    background: white;
+    background: #ffffff;
     padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
     width: 100%;
     max-width: 400px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
+/* Header titre */
 .auth-form h2 {
     text-align: center;
-    margin-bottom: 0.5rem;
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+    font-weight: bold;
     color: #333;
 }
 
 .auth-subtitle {
     text-align: center;
+    font-size: 0.9rem;
     color: #666;
     margin-bottom: 1.5rem;
 }
 
+/* Champs */
 .form-group {
-    margin-bottom: 1rem;
+    margin-bottom: 1.2rem;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: #333;
+    margin-bottom: 0.4rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #444;
 }
 
 .form-group input {
     width: 100%;
-    padding: 0.75rem;
+    padding: 0.8rem;
     border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 1rem;
-    box-sizing: border-box;
+    border-radius: 6px;
+    background: #f9f9f9;
+    font-size: 0.95rem;
+    transition: border 0.3s;
 }
 
-.form-group input.error {
-    border-color: #e74c3c;
+.form-group input:focus {
+    border-color: #111;
+    outline: none;
 }
 
-.error-message {
-    color: #e74c3c;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-    display: block;
-}
-
+/* Bouton principal (style noir) */
 .btn-primary {
     width: 100%;
-    padding: 0.75rem;
-    background-color: #3498db;
+    padding: 0.9rem;
+    background: #111;
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 1rem;
+    font-weight: bold;
     cursor: pointer;
-    margin-top: 1rem;
+    transition: background 0.3s;
+    margin-top: 0.5rem;
 }
 
 .btn-primary:hover {
-    background-color: #2980b9;
+    background: #333;
 }
 
-.btn-primary:disabled {
-    background-color: #bdc3c7;
-    cursor: not-allowed;
-}
-
-.alert {
-    padding: 0.75rem;
-    border-radius: 4px;
-    margin-bottom: 1rem;
-}
-
-.alert-success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
-
-.alert-error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-
+/* Switch login/register */
 .auth-switch {
     text-align: center;
-    margin-top: 1.5rem;
-    color: #666;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #555;
 }
 
 .link-button {
     background: none;
     border: none;
-    color: #3498db;
+    color: #e5a800;
+    /* jaune comme sur l’image */
+    font-weight: bold;
     cursor: pointer;
     text-decoration: underline;
-    margin-left: 0.5rem;
+    padding: 0;
+    margin-left: 0.2rem;
 }
 
 .link-button:hover {
-    color: #2980b9;
+    color: #c48d00;
+}
+
+/* Messages */
+.alert {
+    padding: 0.8rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.alert-error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+    .auth-form {
+        padding: 1.5rem;
+    }
+
+    .auth-form h2 {
+        font-size: 1.2rem;
+    }
 }

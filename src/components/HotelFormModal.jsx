@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-const HotelFormModal = ({ onClose, onCreate }) => {
+const HotelFormModal = ({ onClose, onCreate, onUpdate, editingHotel = null }) => {
   const [formData, setFormData] = useState({
     name: "",
     address: "",
@@ -11,6 +11,21 @@ const HotelFormModal = ({ onClose, onCreate }) => {
     photo: null,
   });
   const [error, setError] = useState(null);
+
+  // Pré-remplir le formulaire si on modifie un hôtel
+  useEffect(() => {
+    if (editingHotel) {
+      setFormData({
+        name: editingHotel.name || "",
+        address: editingHotel.address || "",
+        email: editingHotel.email || "",
+        phone_number: editingHotel.phone_number || "",
+        price_per_night: editingHotel.price_per_night || "",
+        currency: editingHotel.currency || "XOF",
+        photo: null, // Ne pas pré-remplir la photo
+      });
+    }
+  }, [editingHotel]);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -34,8 +49,15 @@ const HotelFormModal = ({ onClose, onCreate }) => {
 
     if (formData.photo) data.append("photo", formData.photo);
 
-    onCreate(data, setError); // Passer setError à onCreate
+    // Si on modifie, utiliser onUpdate, sinon onCreate
+    if (editingHotel) {
+      onUpdate(editingHotel.id, data, setError);
+    } else {
+      onCreate(data, setError);
+    }
   };
+
+  const isEditMode = !!editingHotel;
 
   return (
     <div className="modal-overlay">
@@ -44,7 +66,7 @@ const HotelFormModal = ({ onClose, onCreate }) => {
           <button className="back-btn" onClick={onClose}>
             &larr;
           </button>
-          <h3>Créer un nouvel hôtel</h3>
+          <h3>{isEditMode ? "Modifier l'hôtel" : "Créer un nouvel hôtel"}</h3>
         </div>
         <form className="modal-form" onSubmit={handleSubmit}>
           <div className="form-group">
@@ -122,7 +144,9 @@ const HotelFormModal = ({ onClose, onCreate }) => {
           </div>
 
           <div className="form-group file-input-group">
-            <label htmlFor="photo">Ajouter une photo</label>
+            <label htmlFor="photo">
+              {isEditMode ? "Changer la photo (optionnel)" : "Ajouter une photo"}
+            </label>
             <div className="file-input-container">
               <input
                 type="file"
@@ -148,7 +172,7 @@ const HotelFormModal = ({ onClose, onCreate }) => {
               Annuler
             </button>
             <button type="submit" className="btn-create">
-              Créer
+              {isEditMode ? "Modifier" : "Créer"}
             </button>
           </div>
         </form>

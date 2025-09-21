@@ -11,6 +11,7 @@ const Dashboard = ({ onLogout }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingHotel, setEditingHotel] = useState(null);
   const [error, setError] = useState(null);
   const [stats, setStats] = useState({
     formulaires: 0,
@@ -71,7 +72,7 @@ const Dashboard = ({ onLogout }) => {
     }
   };
 
-  // Fonction pour récupérer les autres statistiques (exemple générique)
+  // Fonction pour récupérer les autres statistiques (appels API réels)
   const fetchStats = async () => {
     const token = localStorage.getItem("authToken");
     if (!token) {
@@ -79,8 +80,7 @@ const Dashboard = ({ onLogout }) => {
       return;
     }
     try {
-      // Exemple : Appels API pour récupérer formulaires, messages, utilisateurs, emails, entités
-      // Remplace ces URLs par les endpoints réels de ton API
+      // Appels API pour récupérer les vraies données
       const endpoints = [
         { key: "formulaires", url: `${API_BASE_URL}/forms` },
         { key: "messages", url: `${API_BASE_URL}/messages` },
@@ -131,6 +131,7 @@ const Dashboard = ({ onLogout }) => {
       console.log("Nouvel hôtel créé :", response.data);
       await fetchHotels(); // Recharger les hôtels
       setIsModalOpen(false);
+      setEditingHotel(null);
       setModalError(null);
       setError(null);
     } catch (error) {
@@ -139,6 +140,79 @@ const Dashboard = ({ onLogout }) => {
         ? Object.values(error.response.data.errors).flat().join(", ")
         : error.response?.data?.message || "Échec de la création de l'hôtel.";
       setModalError(errorMessage);
+    }
+  };
+
+  // Fonction pour modifier un hôtel
+  const handleEditHotel = (hotelId) => {
+    const hotel = hotels.find((h) => h.id === hotelId);
+    setEditingHotel(hotel);
+    setIsModalOpen(true);
+  };
+
+  // Fonction pour mettre à jour un hôtel
+  const handleUpdateHotel = async (hotelId, hotelData, setModalError) => {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      setModalError("Vous devez être connecté pour modifier un hôtel.");
+      return;
+    }
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/hotels/${hotelId}?_method=PUT`,
+        hotelData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log("Hôtel modifié :", response.data);
+      await fetchHotels(); // Recharger les hôtels
+      setIsModalOpen(false);
+      setEditingHotel(null);
+      setModalError(null);
+      setError(null);
+    } catch (error) {
+      console.error("Erreur lors de la modification de l'hôtel:", error);
+      const errorMessage = error.response?.data?.errors
+        ? Object.values(error.response.data.errors).flat().join(", ")
+        : error.response?.data?.message ||
+          "Échec de la modification de l'hôtel.";
+      setModalError(errorMessage);
+    }
+  };
+
+  // Fonction pour supprimer un hôtel
+  const handleDeleteHotel = async (hotelId, hotelName) => {
+    if (
+      !window.confirm(
+        `Êtes-vous sûr de vouloir supprimer l'hôtel "${hotelName}" ?`
+      )
+    ) {
+      return;
+    }
+
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      setError("Vous devez être connecté pour supprimer un hôtel.");
+      return;
+    }
+
+    try {
+      await axios.delete(`${API_BASE_URL}/hotels/${hotelId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log(`Hôtel ${hotelName} supprimé avec succès`);
+      await fetchHotels(); // Recharger la liste des hôtels
+      setError(null);
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'hôtel:", error);
+      const errorMessage =
+        error.response?.data?.message || "Impossible de supprimer l'hôtel.";
+      setError(errorMessage);
     }
   };
 
@@ -153,17 +227,24 @@ const Dashboard = ({ onLogout }) => {
   useEffect(() => {
     fetchUser();
     fetchStats(); // Charger les stats pour le dashboard
+    fetchHotels(); // Charger les hôtels automatiquement au démarrage
+  }, []);
+
+  // Recharger les hôtels quand on change de section vers "hotels"
+  useEffect(() => {
     if (activeSection === "hotels") {
       fetchHotels();
     }
   }, [activeSection]);
 
   const handleAddHotelClick = () => {
+    setEditingHotel(null); // Reset l'hôtel en cours d'édition
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setEditingHotel(null);
     setError(null);
   };
 
@@ -173,47 +254,47 @@ const Dashboard = ({ onLogout }) => {
         return (
           <div>
             <div className="welcome-section">
-              <h2>Bienvenue sur Hotel Manager, ami !</h2>
-              <p>"L'hospitalité est la première des richesses"</p>
+              <h2>Bienvenue sur Hotel Manager</h2>
+              <p>Tableau de bord administrateur</p>
             </div>
             {error && <p className="error-message">{error}</p>}
             <div className="stats-grid">
-              <div className="stat-card purple">
+              <div className="stat-card">
                 <div className="stat-icon">📄</div>
                 <div className="stat-info">
                   <h3>{stats.formulaires}</h3>
                   <p>Formulaires</p>
                 </div>
               </div>
-              <div className="stat-card green">
+              <div className="stat-card">
                 <div className="stat-icon">💬</div>
                 <div className="stat-info">
                   <h3>{stats.messages}</h3>
                   <p>Messages</p>
                 </div>
               </div>
-              <div className="stat-card orange">
+              <div className="stat-card">
                 <div className="stat-icon">👥</div>
                 <div className="stat-info">
                   <h3>{stats.utilisateurs}</h3>
                   <p>Utilisateurs</p>
                 </div>
               </div>
-              <div className="stat-card red">
+              <div className="stat-card">
                 <div className="stat-icon">✉️</div>
                 <div className="stat-info">
                   <h3>{stats.emails}</h3>
                   <p>E-mails</p>
                 </div>
               </div>
-              <div className="stat-card blue">
+              <div className="stat-card">
                 <div className="stat-icon">🏨</div>
                 <div className="stat-info">
                   <h3>{stats.hotels}</h3>
                   <p>Hôtels</p>
                 </div>
               </div>
-              <div className="stat-card indigo">
+              <div className="stat-card">
                 <div className="stat-icon">🏢</div>
                 <div className="stat-info">
                   <h3>{stats.entites}</h3>
@@ -276,8 +357,18 @@ const Dashboard = ({ onLogout }) => {
                       💰 {hotel.price_per_night} {hotel.currency}/nuit
                     </p>
                     <div className="hotel-actions">
-                      <button className="btn-edit">Modifier</button>
-                      <button className="btn-delete">Supprimer</button>
+                      <button
+                        className="btn-edit"
+                        onClick={() => handleEditHotel(hotel.id)}
+                      >
+                        Modifier
+                      </button>
+                      <button
+                        className="btn-delete"
+                        onClick={() => handleDeleteHotel(hotel.id, hotel.name)}
+                      >
+                        Supprimer
+                      </button>
                     </div>
                   </div>
                 ))
@@ -348,6 +439,8 @@ const Dashboard = ({ onLogout }) => {
         <HotelFormModal
           onClose={handleCloseModal}
           onCreate={handleCreateHotel}
+          onUpdate={handleUpdateHotel}
+          editingHotel={editingHotel}
         />
       )}
       <style jsx>{`
@@ -360,7 +453,7 @@ const Dashboard = ({ onLogout }) => {
         }
         .modern-sidebar {
           width: 280px;
-          background-color: #2d3748;
+          background-color: #494646ff;
           color: white;
           display: flex;
           flex-direction: column;
@@ -368,7 +461,7 @@ const Dashboard = ({ onLogout }) => {
         }
         .sidebar-header {
           padding: 2rem 2rem 1.5rem 2rem;
-          border-bottom: 1px solid #4a5568;
+          border-bottom: 1px solid #333;
         }
         .sidebar-header h2 {
           margin: 0;
@@ -387,7 +480,7 @@ const Dashboard = ({ onLogout }) => {
           padding: 1rem 2rem;
           background: none;
           border: none;
-          color: #cbd5e0;
+          color: #ccc;
           font-size: 1rem;
           cursor: pointer;
           transition: all 0.3s ease;
@@ -395,13 +488,13 @@ const Dashboard = ({ onLogout }) => {
           margin-bottom: 0.5rem;
         }
         .menu-item:hover {
-          background-color: #4a5568;
+          background-color: #333;
           color: white;
         }
         .menu-item.active {
-          background-color: #3182ce;
+          background-color: #444;
           color: white;
-          border-right: 4px solid #63b3ed;
+          border-right: 4px solid #666;
         }
         .menu-icon {
           margin-right: 0.75rem;
@@ -415,23 +508,23 @@ const Dashboard = ({ onLogout }) => {
           display: flex;
           align-items: center;
           padding: 1rem 2rem;
-          background-color: #1a202c;
-          border-top: 1px solid #4a5568;
-          border-bottom: 1px solid #4a5568;
+          background-color: #111;
+          border-top: 1px solid #333;
+          border-bottom: 1px solid #333;
         }
         .user-avatar-text {
           width: 40px;
           height: 40px;
           border-radius: 50%;
           margin-right: 0.75rem;
-          background-color: #667eea;
+          background-color: #666;
           color: white;
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: bold;
           font-size: 1.2rem;
-          border: 2px solid #4a5568;
+          border: 2px solid #444;
         }
         .user-info {
           display: flex;
@@ -445,7 +538,7 @@ const Dashboard = ({ onLogout }) => {
         }
         .user-role {
           font-size: 0.75rem;
-          color: #a0aec0;
+          color: #999;
           margin: 0;
         }
         .logout-btn {
@@ -455,13 +548,13 @@ const Dashboard = ({ onLogout }) => {
           padding: 1rem 2rem;
           background: none;
           border: none;
-          color: #cbd5e0;
+          color: #ccc;
           font-size: 1rem;
           cursor: pointer;
           transition: all 0.3s ease;
         }
         .logout-btn:hover {
-          background-color: #e53e3e;
+          background-color: #333;
           color: white;
         }
         .main-content {
@@ -473,19 +566,22 @@ const Dashboard = ({ onLogout }) => {
           text-align: center;
           margin-bottom: 2rem;
           padding: 1.5rem;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
+          background: #f9f9f9;
+          color: #333;
           border-radius: 12px;
+          border: 1px solid #e1e5e9;
         }
         .welcome-section h2 {
           margin: 0 0 0.5rem 0;
           font-size: 1.8rem;
           font-weight: 700;
+          color: #111;
         }
         .welcome-section p {
           margin: 0;
           font-size: 1rem;
-          opacity: 0.9;
+          opacity: 0.8;
+          color: #666;
         }
         .stats-grid {
           display: grid;
@@ -501,29 +597,13 @@ const Dashboard = ({ onLogout }) => {
           display: flex;
           align-items: center;
           transition: transform 0.3s ease, box-shadow 0.3s ease;
-          border-left: 4px solid;
+          border-left: 4px solid #ddd;
+          border: 1px solid #e1e5e9;
         }
         .stat-card:hover {
           transform: translateY(-3px);
           box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-        }
-        .stat-card.purple {
-          border-left-color: #9f7aea;
-        }
-        .stat-card.green {
-          border-left-color: #48bb78;
-        }
-        .stat-card.orange {
-          border-left-color: #ed8936;
-        }
-        .stat-card.red {
-          border-left-color: #e53e3e;
-        }
-        .stat-card.blue {
-          border-left-color: #3182ce;
-        }
-        .stat-card.indigo {
-          border-left-color: #667eea;
+          border-left-color: #999;
         }
         .stat-icon {
           font-size: 2rem;
@@ -534,19 +614,20 @@ const Dashboard = ({ onLogout }) => {
           align-items: center;
           justify-content: center;
           border-radius: 50%;
-          background-color: #f7fafc;
+          background-color: #f2f2f2;
+          color: #333;
         }
         .stat-info h3 {
           margin: 0 0 0.25rem 0;
           font-size: 2rem;
           font-weight: 700;
-          color: #2d3748;
+          color: #111;
         }
         .stat-info p {
           margin: 0;
           font-size: 1rem;
           font-weight: 600;
-          color: #4a5568;
+          color: #666;
         }
         .section-header {
           display: flex;
@@ -558,10 +639,10 @@ const Dashboard = ({ onLogout }) => {
           margin: 0;
           font-size: 1.8rem;
           font-weight: 700;
-          color: #2d3748;
+          color: #111;
         }
         .add-hotel-btn {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: #111;
           color: white;
           border: none;
           padding: 0.75rem 1.5rem;
@@ -569,9 +650,10 @@ const Dashboard = ({ onLogout }) => {
           font-size: 1rem;
           font-weight: 600;
           cursor: pointer;
-          transition: transform 0.2s ease;
+          transition: all 0.3s ease;
         }
         .add-hotel-btn:hover {
+          background: #333;
           transform: translateY(-2px);
         }
         .hotels-list {
@@ -585,6 +667,7 @@ const Dashboard = ({ onLogout }) => {
           border-radius: 8px;
           box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
           transition: transform 0.3s ease, box-shadow 0.3s ease;
+          border: 1px solid #e1e5e9;
         }
         .hotel-card-detail:hover {
           transform: translateY(-3px);
@@ -617,7 +700,7 @@ const Dashboard = ({ onLogout }) => {
           margin: 0;
           font-size: 1rem;
           font-weight: 600;
-          color: #2d3748;
+          color: #111;
         }
         .hotel-status {
           font-size: 0.7rem;
@@ -625,16 +708,16 @@ const Dashboard = ({ onLogout }) => {
           border-radius: 12px;
         }
         .hotel-status.active {
-          background-color: #f0fff4;
-          color: #38a169;
+          background-color: #f0f0f0;
+          color: #333;
         }
         .hotel-status.inactive {
-          background-color: #fed7d7;
-          color: #e53e3e;
+          background-color: #f5f5f5;
+          color: #666;
         }
         .hotel-info {
           margin: 0.3rem 0;
-          color: #4a5568;
+          color: #666;
           font-size: 0.8rem;
         }
         .hotel-actions {
@@ -645,26 +728,26 @@ const Dashboard = ({ onLogout }) => {
         .btn-edit,
         .btn-delete {
           padding: 0.3rem 0.6rem;
-          border: 1px solid #e2e8f0;
+          border: 1px solid #ddd;
           background: white;
-          color: #4a5568;
+          color: #666;
           border-radius: 5px;
           font-size: 0.7rem;
           cursor: pointer;
           transition: all 0.2s ease;
         }
         .btn-edit:hover {
-          background: #38a169;
+          background: #251f1fff;
           color: white;
-          border-color: #38a169;
+          border-color: #111;
         }
         .btn-delete:hover {
-          background: #e53e3e;
+          background: #666;
           color: white;
-          border-color: #e53e3e;
+          border-color: #666;
         }
         .error-message {
-          color: #e53e3e;
+          color: #d32f2f;
           font-size: 0.9rem;
           margin-bottom: 1rem;
           text-align: center;
