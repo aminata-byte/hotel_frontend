@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { authAPI } from "./services/api";
 import {
   BrowserRouter as Router,
   Routes,
@@ -205,7 +205,7 @@ function App() {
     setIsLoading(true);
     setMessage("");
     try {
-      const res = await axios.post("http://127.0.0.1:8000/api/login", {
+      const res = await authAPI.login({
         email: loginEmail,
         password: loginPassword,
       });
@@ -230,7 +230,7 @@ function App() {
       return;
     }
     try {
-      const res = await axios.post("http://127.0.0.1:8000/api/register", {
+      const res = await authAPI.register({
         name: registerName,
         email: registerEmail,
         password: registerPassword,

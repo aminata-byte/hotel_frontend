@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { authAPI } from "../services/api";
 import "./AuthForm.css";
 
 const Register = ({ switchToLogin }) => {
@@ -50,10 +50,7 @@ const Register = ({ switchToLogin }) => {
         password: formData.password,
       };
 
-      const response = await axios.post(
-        "http://127.0.0.1:8000/api/register",
-        apiData
-      );
+      const response = await authAPI.register(apiData);
 
       if (response.status === 201) {
         setSuccessMessage(
