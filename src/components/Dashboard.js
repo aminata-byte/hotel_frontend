@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { authAPI, hotelsAPI, statsAPI, API_BASE_URL } from "../services/api";
 import HotelFormModal from "./HotelFormModal";
 
