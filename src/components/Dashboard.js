@@ -116,22 +116,8 @@ const Dashboard = ({ onLogout }) => {
 
   // Fonction pour mettre à jour un hôtel
   const handleUpdateHotel = async (hotelId, hotelData, setModalError) => {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      setModalError("Vous devez être connecté pour modifier un hôtel.");
-      return;
-    }
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/hotels/${hotelId}?_method=PUT`,
-        hotelData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const response = await hotelsAPI.updateHotel(hotelId, hotelData);
       console.log("Hôtel modifié :", response.data);
       await fetchHotels(); // Recharger les hôtels
       setIsModalOpen(false);
@@ -158,16 +144,8 @@ const Dashboard = ({ onLogout }) => {
       return;
     }
 
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      setError("Vous devez être connecté pour supprimer un hôtel.");
-      return;
-    }
-
     try {
-      await axios.delete(`${API_BASE_URL}/hotels/${hotelId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await hotelsAPI.deleteHotel(hotelId);
 
       console.log(`Hôtel ${hotelName} supprimé avec succès`);
       await fetchHotels(); // Recharger la liste des hôtels
